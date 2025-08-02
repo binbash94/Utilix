@@ -1,3 +1,4 @@
+// Extend the result type (optional fields for compatibility)
 export type ParcelResult = {
   apn: string;
   electric_available: boolean;
@@ -6,6 +7,9 @@ export type ParcelResult = {
   water_provider: string | null;
   sewer_available: boolean;
   sewer_provider: string | null;
+  well_available?: boolean | null;
+  well_use?: string | null;
+  septic_present?: boolean | null;
 } | null;
 
 function Row({ label, value }: { label: string; value?: string | null }) {
@@ -17,6 +21,9 @@ function Row({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
+const asYesNo = (v?: boolean | null) =>
+  v === undefined || v === null ? "Unknown" : v ? "Yes" : "No";
+
 export default function ResultsCard({ result }: { result: ParcelResult }) {
   return (
     <div className="bg-ui-card rounded-2xl border border-ui-border p-5 shadow-soft">
@@ -26,20 +33,39 @@ export default function ResultsCard({ result }: { result: ParcelResult }) {
       ) : (
         <div className="space-y-4">
           <Row label="APN / STRAP" value={result.apn} />
+
+          {/* Electric */}
           <div className="pt-2">
             <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Electric</div>
             <Row label="Available" value={result.electric_available ? "Yes" : "No"} />
             <Row label="Provider" value={result.electric_provider} />
           </div>
+
+          {/* Water */}
           <div>
             <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Water</div>
             <Row label="Available" value={result.water_available ? "Yes" : "No"} />
             <Row label="Provider" value={result.water_provider} />
           </div>
+
+          {/* Sewer */}
           <div>
             <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Sewer</div>
             <Row label="Available" value={result.sewer_available ? "Yes" : "No"} />
             <Row label="Provider" value={result.sewer_provider} />
+          </div>
+
+          {/* Well */}
+          <div>
+            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Well</div>
+            <Row label="Present" value={asYesNo(result.well_available)} />
+            <Row label="Use" value={result.well_use ?? (result.well_available ? "—" : null)} />
+          </div>
+
+          {/* NEW: Septic */}
+          <div>
+            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Septic</div>
+            <Row label="Present" value={asYesNo(result.septic_present)} />
           </div>
         </div>
       )}

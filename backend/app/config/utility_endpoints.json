@@ -43,6 +43,16 @@
       },
       "dynamic_params": ["geometry"],
       "provider_field": "FranchiseName"
+    },
+    "wells_layer": {
+      "url": "https://services2.arcgis.com/LvWGAAhHwbCJ2GMP/arcgis/rest/services/WellsPermittedLeeCounty/FeatureServer/0/query",
+      "static_params": {
+        "f": "json",
+        "outFields": "WELL_USE,SEPTIC",
+        "returnGeometry": false,
+        "outSR": 4326
+      },
+      "dynamic_params": ["where", "geometry", "geometryType", "spatialRel"]
     }
   }
 }

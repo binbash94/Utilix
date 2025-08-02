@@ -8,6 +8,7 @@ export type LookupPayload = {
   state: string;
 };
 
+// Extended response: new fields are optional so old backends won't break.
 export type LookupResponse = {
   apn: string;
   electric_available: boolean;
@@ -16,6 +17,11 @@ export type LookupResponse = {
   water_provider: string | null;
   sewer_available: boolean;
   sewer_provider: string | null;
+
+  // NEW (optional)
+  well_available?: boolean | null;
+  well_use?: string | null;
+  septic_present?: boolean | null;
 };
 
 export async function lookupParcel(payload: LookupPayload) {

@@ -46,6 +46,9 @@ class ParcelUtilityInfo(BaseModel):
     water_provider: Optional[str]
     sewer_available: bool
     sewer_provider: Optional[str]
+    well_available: Optional[bool] = None
+    well_use: Optional[str] = None
+    septic_present: Optional[bool] = None
 
     class Config:
         from_attributes = True  # allows SQLModel → pydantic if needed

@@ -14,6 +14,7 @@ class CountyCfg(BaseModel):
     electric_territory_layer: LayerCfg
     water_layer: LayerCfg
     sewer_layer: LayerCfg
+    wells_layer: LayerCfg
     # add optional layers as needed, e.g. water_layer: LayerCfg | None = None
 
 Catalogue = Dict[str, CountyCfg]

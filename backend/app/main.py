@@ -1,5 +1,7 @@
 import os
 
+from contextlib import asynccontextmanager
+from .services.http_client import init_http_clients, close_http_clients
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
@@ -9,8 +11,18 @@ from .core.database import engine
 
 origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    await init_http_clients()
+    try:
+        yield
+    finally:
+        # shutdown
+        await close_http_clients()
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="Land-SaaS", version="1.0.0")
+    app = FastAPI(title="Land-SaaS", version="1.0.0", lifespan=lifespan)
 
     if settings.BACKEND_CORS_ORIGINS:
         app.add_middleware(
