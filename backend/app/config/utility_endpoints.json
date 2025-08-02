@@ -1,0 +1,48 @@
+{
+  "lee-county_fl": {
+    "id_field": "STRAP",
+    "parcel_layer": {
+      "url": "https://gismapserver.leegov.com/gisserver910/rest/services/DataExplorer/Parcels/MapServer/0/query",
+      "static_params": {
+        "f": "json",
+        "outFields": "*",
+        "returnGeometry": true,
+        "outSR": 4326
+      },
+      "dynamic_params": ["objectIds", "geometry", "where"]
+    },
+    "electric_territory_layer": {
+      "url": "https://services2.arcgis.com/LvWGAAhHwbCJ2GMP/arcgis/rest/services/Electric_Territories/FeatureServer/0/query",
+      "static_params": {
+        "f": "json",
+        "outFields": "type,objectid",
+        "returnGeometry": false,
+        "outSR": 4326
+      },
+      "dynamic_params": ["geometry"],
+      "provider_field": "type"
+    },
+    "water_layer": {                                   
+      "url": "https://gismapserver.leegov.com/gisserver910/rest/services/DataExplorer/Utilities/MapServer/1/query",
+      "static_params": {
+        "f": "json",
+        "outFields": "FranchiseName,OBJECTID",
+        "returnGeometry": false,
+        "outSR": 4326                                 
+      },
+      "dynamic_params": ["geometry"],
+      "provider_field": "FranchiseName"               
+    },
+    "sewer_layer": {
+      "url": "https://gismapserver.leegov.com/gisserver910/rest/services/DataExplorer/Utilities/MapServer/2/query",
+      "static_params": {
+        "f": "json",
+        "outFields": "FranchiseName,OBJECTID",
+        "returnGeometry": false,
+        "outSR": 4326
+      },
+      "dynamic_params": ["geometry"],
+      "provider_field": "FranchiseName"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlmodel>=0.0.16
+asyncpg
+alembic
+passlib[bcrypt]
+python-jose[cryptography]
+pydantic-settings
+celery[redis]
+pytest

@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+sqlmodel>=0.0.16
+asyncpg
+alembic
+passlib[bcrypt]==1.7.4   # 1.7.4+ works with new bcrypt
+bcrypt>=4.0,<5
+python-jose[cryptography]
+pydantic-settings
+celery[redis]
+pytest
+email-validator
+pandas
+python-multipart
+psycopg2-binary
+python-slugify>=8.0.4
+httpx
+# run migrations: alembic revision --autogenerate -m "init" && alembic upgrade head or set AUTO_MIGRATE=true

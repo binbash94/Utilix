@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+    env_file: .env.dev
+    volumes:
+      - ./backend:/app/backend
+    ports: ["8000:8000"]
+    depends_on: [db, redis]
+    environment:
+      - CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./frontend:/app                 # code bind mount
+      - /app/node_modules               # anonymous volume for deps
+    ports: ["5173:5173"]
+    depends_on: [web]
+    environment:
+      - VITE_DEV_SERVER=true
+    command: >
+      sh -c "
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        npm run dev -- --host 0.0.0.0
+      "
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    command: >
+      celery -A worker.app.worker:celery_app worker
+             --loglevel=info -Q default
+    env_file: .env.dev
+    volumes:
+      - ./backend:/app/backend
+    depends_on: [db, redis]
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: land_saas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes: [db_data:/var/lib/postgresql/data]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+volumes:
+  db_data: {}

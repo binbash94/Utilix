@@ -1,0 +1,66 @@
+# ─── Root ignores ───────────────────────────
+.env*
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.db
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# ─── Docker ─────────────────────────────────
+*.pid
+*.sock
+docker-compose.override.yml
+
+# ─── Python (backend, worker) ───────────────
+/backend/__pycache__/
+/backend/*.py[cod]
+/backend/venv/
+/backend/.mypy_cache/
+/backend/.pytest_cache/
+/backend/.ruff_cache/
+/worker/__pycache__/
+/worker/*.py[cod]
+/worker/venv/
+/worker/.mypy_cache/
+/worker/.pytest_cache/
+/worker/.ruff_cache/
+
+# ─── Node/Vite (frontend) ───────────────────
+/frontend/node_modules/
+/frontend/.vite/
+/frontend/dist/
+/frontend/.eslintcache
+/frontend/.parcel-cache
+/frontend/package-lock.json.orig
+
+# ─── Build outputs ──────────────────────────
+**/dist/
+**/build/
+**/.next/
+**/.output/
+
+# ─── Coverage / Testing ─────────────────────
+htmlcov/
+coverage.*
+.tox/
+.nox/
+.pytest_cache/
+.cache/
+
+# ─── Misc ───────────────────────────────────
+*.tgz
+*.zip
+*.tar
+*.tmp
+*.bak
+*.old
+
+# ─── Environment Variables ──────────────────
+.env
+.env.*
