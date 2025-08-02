@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { login } from "../services/auth";
 import { useNavigate } from "react-router-dom";
+import { useConfig } from "../services/ConfigContext";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -8,11 +9,16 @@ export default function Login() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setToken } = useConfig();
   const inputCls = "w-full bg-ui-card border border-ui-border focus:border-ui-primary outline-none rounded-xl px-3 py-3 text-sm";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(null); setLoading(true);
-    try { await login(username, password); navigate("/"); }
+    try {
+      const t = await login(username, password);
+      if (t) setToken(`Bearer ${t}`);
+      navigate("/");
+    }
     catch (e: any) { setErr(e?.response?.data?.detail || "Login failed"); }
     finally { setLoading(false); }
   };

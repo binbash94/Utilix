@@ -1,4 +1,4 @@
-export type ClientConfig = { apiBase?: string; token?: string };
+export type ClientConfig = { token?: string };
 const KEY = "utilix_cfg_v1";
 
 export function getStoredConfig(): ClientConfig {
@@ -12,5 +12,6 @@ export function getHeaders() {
   const cfg = getStoredConfig();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (cfg.token) headers.Authorization = cfg.token.startsWith("Bearer") ? cfg.token : `Bearer ${cfg.token}`;
-  return { baseURL: (cfg.apiBase || "").replace(/\/$/, ""), headers };
+  const baseURL = (import.meta as any).env.VITE_API_BASE || "http://localhost:8000";
+  return { baseURL: baseURL.replace(/\/$/, ""), headers };
 }

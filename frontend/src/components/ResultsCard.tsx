@@ -4,10 +4,8 @@ export type ParcelResult = {
   electric_provider: string | null;
   water_available: boolean;
   water_provider: string | null;
-  water_phone?: string | null;
   sewer_available: boolean;
   sewer_provider: string | null;
-  sewer_phone?: string | null;
 } | null;
 
 function Row({ label, value }: { label: string; value?: string | null }) {
@@ -37,13 +35,11 @@ export default function ResultsCard({ result }: { result: ParcelResult }) {
             <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Water</div>
             <Row label="Available" value={result.water_available ? "Yes" : "No"} />
             <Row label="Provider" value={result.water_provider} />
-            <Row label="Phone" value={result.water_phone} />
           </div>
           <div>
             <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Sewer</div>
             <Row label="Available" value={result.sewer_available ? "Yes" : "No"} />
             <Row label="Provider" value={result.sewer_provider} />
-            <Row label="Phone" value={result.sewer_phone} />
           </div>
         </div>
       )}

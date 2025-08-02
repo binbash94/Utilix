@@ -42,7 +42,7 @@ export default function LookupForm({ onResult }: { onResult: (r: any) => void })
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-ui-subtext">APN / STRAP</label>
-          <input className={inputCls} placeholder="10-45-27-L1-06034.0240" {...register("apn")} />
+          <input className={inputCls} placeholder="124423C1023650290" {...register("apn")} />
           {errors.apn && <p className="text-ui-danger text-xs mt-1">{errors.apn.message}</p>}
         </div>
         <div>
@@ -53,7 +53,7 @@ export default function LookupForm({ onResult }: { onResult: (r: any) => void })
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-ui-subtext">County / City Key</label>
-          <input className={inputCls} placeholder="Lehigh Acres" {...register("county")} />
+          <input className={inputCls} placeholder="Lee County" {...register("county")} />
           {errors.county && <p className="text-ui-danger text-xs mt-1">{errors.county.message}</p>}
         </div>
         <div>
