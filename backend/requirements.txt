@@ -1,4 +1,5 @@
 fastapi
+gunicorn
 uvicorn[standard]
 sqlmodel>=0.0.16
 asyncpg

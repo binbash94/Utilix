@@ -1,52 +1,47 @@
 version: "3.9"
 
 services:
+  # ---------------------------
+  # Backend (FastAPI + Gunicorn)
+  # ---------------------------
   web:
     build:
       context: ./backend
       dockerfile: Dockerfile
     env_file: .env.prod
-    command: gunicorn -k uvicorn.workers.UvicornWorker -w 4 \
-             backend.app.main:app --bind 0.0.0.0:8000
-    depends_on: [db, redis]
-    ports: ["80:8000"]
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: dev
-    volumes:
-      - ./frontend:/app                 # code bind mount
-      - /app/node_modules               # anonymous volume for deps
-    ports: ["5173:5173"]
-    depends_on: [web]
-    environment:
-      - VITE_DEV_SERVER=true
     command: >
-      sh -c "
-        if [ -f package-lock.json ]; then npm ci; else npm install; fi
-        npm run dev -- --host 0.0.0.0
-      "
+      gunicorn -k uvicorn.workers.UvicornWorker -w 4
+      backend.app.main:app --bind 0.0.0.0:8000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - "8000"            # internal-only; nginx reaches http://web:8000
+    restart: unless-stopped
+
+  # --------------
+  # Celery Worker
+  # --------------
   worker:
     build:
-      context: .                # build from project root
+      context: .
       dockerfile: worker/Dockerfile
     env_file: .env.prod
     command: >
       celery -A worker.app.worker:celery_app worker
-             --loglevel=info -Q default
+      --loglevel=info -Q default
     depends_on:
-      - db
-      - redis
-    deploy:
-      restart_policy:
-        condition: on-failure
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
 
+  # ---------
+  # Postgres
+  # ---------
   db:
     image: postgres:16-alpine
     environment:
@@ -55,9 +50,57 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d land_saas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
+  # ------
+  # Redis
+  # ------
   redis:
     image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+
+  # --------------------
+  # Frontend build-only
+  # --------------------
+  # Uses my Dockerfile build stage to produce /app/dist,
+  # then copies it into a named volume that nginx will serve.
+  frontend-build:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: build
+    volumes:
+      - frontend_dist:/export
+    # Copy the built assets from /app/dist -> volume (/export)
+    command: >
+      sh -c "rm -rf /export/* && cp -r /app/dist/* /export/ && ls -la /export"
+    restart: "no"
+
+  # --------------------
+  # NGINX reverse proxy
+  # --------------------
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      web:
+        condition: service_started
+      frontend-build:
+        condition: service_completed_successfully
+    ports:
+      - "80:80"
+      # - "443:443" # enable when you add TLS
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - frontend_dist:/usr/share/nginx/html:ro  # serve built SPA
+      # - ./nginx/certs:/etc/nginx/certs:ro     # for TLS (optional)
+    restart: unless-stopped
 
 volumes:
   db_data: {}
+  frontend_dist: {}
