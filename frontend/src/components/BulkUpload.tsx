@@ -1,10 +1,12 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { lookupParcel, LookupResponse } from "../services/api";
+import { useConfig } from "../services/ConfigContext";
 
 type RowIn = { apn: string; address?: string; county: string; state: string };
 
 export default function BulkUpload() {
+  const { token } = useConfig();
   const [rows, setRows] = useState<RowIn[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [results, setResults] = useState<(LookupResponse & { __row?: number })[]>([]);
@@ -33,6 +35,10 @@ export default function BulkUpload() {
   };
 
   const run = async () => {
+      if (!token) {
+      setError("User is not authenticated.");
+      return;
+    }
     setProgress({ done: 0, total: rows.length });
     const out: (LookupResponse & { __row?: number })[] = [];
     for (let i = 0; i < rows.length; i++) {

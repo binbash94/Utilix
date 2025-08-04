@@ -7,7 +7,7 @@ import { useState } from "react";
 const Schema = z.object({
   apn: z.string().min(3, "APN/STRAP required"),
   street_address: z.string().optional(),
-  county: z.string().min(2, "County/City key required"),
+  county: z.string().min(2, "County required"),
   state: z.string().min(2).max(2)
 });
 type FormData = z.infer<typeof Schema>;
