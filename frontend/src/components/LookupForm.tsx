@@ -52,8 +52,8 @@ export default function LookupForm({ onResult }: { onResult: (r: any) => void })
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <label className="text-xs text-ui-subtext">County / City Key</label>
-          <input className={inputCls} placeholder="Lee County" {...register("county")} />
+          <label className="text-xs text-ui-subtext">County</label>
+          <input className={inputCls} placeholder="Lee" {...register("county")} />
           {errors.county && <p className="text-ui-danger text-xs mt-1">{errors.county.message}</p>}
         </div>
         <div>

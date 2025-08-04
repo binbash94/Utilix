@@ -1,5 +1,5 @@
 {
-  "lee-county_fl": {
+  "lee_fl": {
     "id_field": "STRAP",
     "parcel_layer": {
       "url": "https://gismapserver.leegov.com/gisserver910/rest/services/DataExplorer/Parcels/MapServer/0/query",

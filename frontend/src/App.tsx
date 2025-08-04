@@ -1,3 +1,4 @@
+// App.tsx
 import { useState } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import LookupForm from "./components/LookupForm";
@@ -47,25 +48,30 @@ export default function App() {
       </header>
 
       <Routes>
-        <Route path="/" element={
-          <main className="max-w-6xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-6">
-            <section className="md:col-span-2 space-y-6">
-              <div className="bg-ui-card rounded-2xl border border-ui-border p-5 shadow-soft">
-                <h2 className="text-lg font-semibold mb-4 text-ui-primary2">Single Lookup</h2>
-                <LookupForm onResult={setResults} />
-              </div>
-              <div className="bg-ui-card rounded-2xl border border-ui-border p-5 shadow-soft">
-                <h2 className="text-lg font-semibold mb-4 text-ui-primary2">Bulk Upload (CSV / Excel)</h2>
-                <BulkUpload />
-              </div>
-            </section>
-            <aside className="space-y-6">
-              <ResultsCard result={results} />
-            </aside>
-          </main>
-        }/>
-        <Route path="/login" element={<Login/>}/>
-        <Route path="/register" element={<Register/>}/>
+        <Route
+          path="/"
+          element={
+            // Single column layout; stack cards vertically
+            <main className="max-w-6xl mx-auto px-4 py-8">
+              <section className="space-y-6">
+                <div className="bg-ui-card rounded-2xl border border-ui-border p-5 shadow-soft">
+                  <h2 className="text-lg font-semibold mb-4 text-ui-primary2">Single Lookup</h2>
+                  <LookupForm onResult={setResults} />
+                </div>
+
+                <div className="bg-ui-card rounded-2xl border border-ui-border p-5 shadow-soft">
+                  <h2 className="text-lg font-semibold mb-4 text-ui-primary2">Bulk Upload (CSV / Excel)</h2>
+                  <BulkUpload />
+                </div>
+
+                {/* Results moved here: directly underneath Bulk Upload */}
+                <ResultsCard result={results} />
+              </section>
+            </main>
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
 
       <footer className="border-t border-ui-border py-6 text-center text-xs text-ui-subtext">

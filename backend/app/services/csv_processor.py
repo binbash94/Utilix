@@ -8,11 +8,6 @@ from .parcel_lookup import get_utilities_for_parcel
 
 
 async def parse_in_memory(buffer: bytes, filename: str) -> List[ParcelUtilityInfo]:
-    """
-    Lightweight parser used synchronously in dev.
-    For prod you'll likely off-load to a Celery task and give
-    the client a polling endpoint or websocket to stream results.
-    """
     ext = filename.lower().split(".")[-1]
     if ext == "csv":
         df = pd.read_csv(io.BytesIO(buffer))
@@ -21,16 +16,34 @@ async def parse_in_memory(buffer: bytes, filename: str) -> List[ParcelUtilityInf
     else:
         raise ValueError("Unsupported file type")
 
-    required_cols = {"apn", "street_address"}
-    missing = required_cols - set(df.columns.str.lower())
+    # Normalize column names (strip spaces, lower-case, replace spaces with underscores)
+    df.columns = (
+        df.columns.str.strip().str.lower().str.replace(r"\s+", "_", regex=True)
+    )
+
+    # Accept common variants
+    rename_map = {}
+    if "address" in df.columns and "street_address" not in df.columns:
+        rename_map["address"] = "street_address"
+    if "pan" in df.columns and "apn" not in df.columns:
+        rename_map["pan"] = "apn"
+    df = df.rename(columns=rename_map)
+
+    required_cols = ["apn", "street_address", "county", "state"]
+    missing = set(required_cols) - set(df.columns)
+
     if missing:
-        raise ValueError(f"Missing required columns: {', '.join(missing)}")
+        raise ValueError(f"Missing required columns: {', '.join(sorted(missing))}")
+
+    df = df[required_cols]
 
     results: list[ParcelUtilityInfo] = []
     for _, row in df.iterrows():
         info = await get_utilities_for_parcel(
             apn=str(row["apn"]),
             address=row.get("street_address"),
+            county=row.get("county"),
+            state=row.get("state"),
         )
         if info:
             results.append(info)

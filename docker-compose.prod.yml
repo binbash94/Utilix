@@ -15,6 +15,23 @@ services:
       restart_policy:
         condition: on-failure
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./frontend:/app                 # code bind mount
+      - /app/node_modules               # anonymous volume for deps
+    ports: ["5173:5173"]
+    depends_on: [web]
+    environment:
+      - VITE_DEV_SERVER=true
+    command: >
+      sh -c "
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        npm run dev -- --host 0.0.0.0
+      "
   worker:
     build:
       context: .                # build from project root
