@@ -17,11 +17,11 @@ export type LookupResponse = {
   water_provider: string | null;
   sewer_available: boolean;
   sewer_provider: string | null;
-
-  // NEW (optional)
   well_available?: boolean | null;
   well_use?: string | null;
   septic_present?: boolean | null;
+  sewer_connected?:boolean | null;
+  water_connected?:boolean | null;
 };
 
 export async function lookupParcel(payload: LookupPayload) {

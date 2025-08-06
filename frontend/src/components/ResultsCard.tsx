@@ -10,6 +10,8 @@ export type ParcelResult = {
   well_available?: boolean | null;
   well_use?: string | null;
   septic_present?: boolean | null;
+  sewer_connected?:boolean | null;
+  water_connected?:boolean | null;
 } | null;
 
 function Row({ label, value }: { label: string; value?: string | null }) {
@@ -57,15 +59,24 @@ export default function ResultsCard({ result }: { result: ParcelResult }) {
 
           {/* Well */}
           <div>
-            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Well</div>
+            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Water Well</div>
             <Row label="Present" value={asYesNo(result.well_available)} />
-            <Row label="Use" value={result.well_use ?? (result.well_available ? "—" : null)} />
           </div>
 
           {/* NEW: Septic */}
           <div>
-            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Septic</div>
+            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">Septic Tank</div>
             <Row label="Present" value={asYesNo(result.septic_present)} />
+          </div>
+
+          <div>
+            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">City Sewer</div>
+            <Row label="Present" value={asYesNo(result.sewer_connected)} />
+          </div>
+
+          <div>
+            <div className="text-sm uppercase tracking-wide text-ui-subtext mb-2">City Water</div>
+            <Row label="Present" value={asYesNo(result.water_connected)} />
           </div>
         </div>
       )}

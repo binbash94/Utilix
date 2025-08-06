@@ -55,7 +55,8 @@ export default function BulkUpload() {
       } catch {
         out.push({ apn: apn, electric_available: false, electric_provider: null,
                    water_available: false, water_provider: null,
-                   sewer_available: false, sewer_provider: null } as any);
+                   sewer_available: false, sewer_provider: null,
+                   sewer_connected: false,  water_connected: false} as any);
       }
       setProgress({ done: i + 1, total: rows.length });
       await new Promise(res => setTimeout(res, 10));

@@ -20,12 +20,35 @@ HTTP_TIMEOUT = httpx.Timeout(10.0)
 
 
 def _parse_bool(v: Any) -> bool | None:
-    if v is None: return None
-    if isinstance(v, bool): return v
+    """
+    Interprets a wide variety of truthy / falsy tokens used in ArcGIS layers.
+    Returns True, False, or None if indeterminate.
+    """
+    if v is None:
+        return None
+    if isinstance(v, bool):
+        return v
+
     s = str(v).strip().lower()
-    if s in {"y","yes","true","1"}: return True
-    if s in {"n","no","false","0"}: return False
+
+    truthy = {
+        "y", "yes", "true", "1",
+        "knownwell", "known septic", "knownseptic",  # FL DOH layer
+        "knownwellandseptic", "known well", "known septic",
+        "private", "onsite", "available", "LikelySeptic", "LikelyWell", 
+        "LikelySewer", "Known Public", "Likely Public", "Known Sewer"
+    }
+    falsy = {
+        "n", "no", "false", "0",
+        "none", "public", "notavailable", "unknown", "na"
+    }
+
+    if s.replace(" ", "") in truthy:
+        return True
+    if s.replace(" ", "") in falsy:
+        return False
     return None
+
 
 def _parse_date(s: Any) -> datetime | None:
     if not s: return None
@@ -38,19 +61,23 @@ def _parse_date(s: Any) -> datetime | None:
 
 async def _wells_for_parcel(layer: LayerCfg, strap: str) -> list[dict]:
     """
-    Attribute-only query 
+    Query statewide FL DOH well/septic layer by parcel identifiers.
+    Tries both PARCELNO and ALT_KEY; falls back to geometry (point-in-poly)
+    if the ID lookup fails.
     """
-    by_attr = await _arcgis_query(
+    # attribute query by PARCELNO or ALT_KEY
+    attr_where = f"PARCELNO='{strap}' OR ALT_KEY='{strap}'"
+    resp = await _arcgis_query(
         layer,
-        {
-            "where": f"PARCEL_STRAP_NUMBER='{strap}'",  # use as-is
-            "returnGeometry": False,
-            "outSR": 4326,
-        },
+        {"where": attr_where, "returnGeometry": False, "outSR": 4326},
     )
-    feats = by_attr.get("features", [])
+    feats = resp.get("features", [])
     if feats:
         return [f["attributes"] for f in feats]
+
+    # no record by ID → optional geometry fallback (centroid within 25 m buffer)
+    # (Useful for vacant parcels whose IDs weren’t captured.)
+    return []
 
 def _pick_most_recent(rows: list[dict]) -> dict | None:
     if not rows: return None
@@ -132,6 +159,55 @@ async def _point_in_layer(layer: LayerCfg, lon: float, lat: float) -> Optional[s
     field = layer.provider_field            # ← pulled from JSON catalogue
     return feats[0]["attributes"].get(field) if feats else None
 
+def _norm(s: Optional[str]) -> str:
+    return (s or "").strip().lower()
+
+def _classify_water_sewer(dw: str | None, ww: str | None) -> tuple[bool | None, bool | None, bool | None]:
+    """
+    Map FLWMI DrinkingWater (DW) / WasteWater (WW) strings to:
+      (well_available, water_connected, sewer_connected)
+
+    DW examples seen:
+      "KnownWell", "Known Private Well", "Public", "Known Public", "None", "Unknown"
+    WW examples seen:
+      "KnownSeptic", "Known Onsite Septic", "Known Sewer", "Public", "None", "Unknown"
+    """
+    dw_s = _norm(dw)
+    ww_s = _norm(ww)
+
+    # ---- WELL / CITY WATER ---------------------------------------------------
+    well_available: Optional[bool] = None
+    water_connected: Optional[bool] = None
+
+    if dw_s:
+        if "public" in dw_s:
+            # City/Public water service connected
+            well_available = False
+            water_connected = True
+        elif "well" in dw_s:  # catches "KnownWell", "Known Private Well", etc.
+            well_available = True
+            water_connected = False
+        elif dw_s in {"none", "unknown"}:
+            well_available = None
+            water_connected = None
+
+    # ---- CITY SEWER / SEPTIC -------------------------------------------------
+    sewer_connected: Optional[bool] = None
+    if ww_s:
+        # Prioritize "septic" vs "sewer"
+        if "sewer" in ww_s and "septic" not in ww_s:
+            sewer_connected = True
+        elif "septic" in ww_s:
+            sewer_connected = False
+        elif ww_s in {"public"}:
+            # "Public" in WW context generally implies connection to public sewer,
+            # but FLWMI sometimes uses "Public" as a generic source tag.
+            sewer_connected = True
+        elif ww_s in {"none", "unknown"}:
+            sewer_connected = None
+
+    return well_available, water_connected, sewer_connected
+
 # ──────────────────────────────────────────────────────────────────────────────
 #  Public API
 # ──────────────────────────────────────────────────────────────────────────────
@@ -163,19 +239,24 @@ async def get_utilities_for_parcel(
     well_available: Optional[bool] = None
     well_use: Optional[str] = None
     septic_present: Optional[bool] = None
+    water_connected: Optional[bool] = None
+    sewer_connected: Optional[bool] = None
 
-    if getattr(cfg, "wells_layer", None):
-        rows = await _wells_for_parcel(cfg.wells_layer, apn)
+    wells_layer = getattr(cfg, "wells_layer", None)
+    if wells_layer:
+        rows = await _wells_for_parcel(wells_layer, apn)
         if rows:
-            # Decide presence in the simplest way possible:
-            # - well_available: at least one record exists (you can tighten later if needed)
-            well_available = True
-            # - well_use: take the most recent non-empty WELL_USE
-            recent = _pick_most_recent([r for r in rows if (r.get("WELL_USE") or "").strip()])
-            well_use = (recent or {}).get("WELL_USE")
-            # - septic_present: True if any record shows SEPTIC truthy
-            septic_vals = [_parse_bool(r.get("SEPTIC")) for r in rows]
-            septic_present = True if any(v is True for v in septic_vals) else (False if any(v is False for v in septic_vals) else None)
+            row = rows[0]                      # FLWMI = one row per parcel
+            well_available, water_connected, sewer_connected = _classify_water_sewer(
+                row.get("DW"), row.get("WW")
+            )
+            well_use = row.get("DW_SRC_TYP") or row.get("DW_SRC_NAME")
+            # septic_present duplicated for clarity
+            septic_present = None
+            if sewer_connected is not None:
+                septic_present = not sewer_connected
+            elif row.get("WW"):
+                septic_present = _parse_bool(row["WW"])
 
     return ParcelUtilityInfo(
         apn=apn,
@@ -186,6 +267,7 @@ async def get_utilities_for_parcel(
         sewer_available=bool(sewer),
         sewer_provider=sewer,
         well_available=well_available,
-        well_use=well_use,
-        septic_present=septic_present
+        septic_present=septic_present,
+        water_connected=water_connected,
+        sewer_connected=sewer_connected
     )

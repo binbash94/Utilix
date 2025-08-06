@@ -45,14 +45,15 @@
       "provider_field": "FranchiseName"
     },
     "wells_layer": {
-      "url": "https://services2.arcgis.com/LvWGAAhHwbCJ2GMP/arcgis/rest/services/WellsPermittedLeeCounty/FeatureServer/0/query",
+      "url": "https://gis.floridahealth.gov/server/rest/services/FLWMI/FLWMI_DrinkingWater/FeatureServer/0/query",
       "static_params": {
         "f": "json",
-        "outFields": "WELL_USE,SEPTIC",
+        "outFields": "DW,WW,PARCELNO,ALT_KEY,DW_SRC_TYP,WW_SRC_TYP,OBJECTID",
         "returnGeometry": false,
         "outSR": 4326
       },
-      "dynamic_params": ["where", "geometry", "geometryType", "spatialRel"]
+      "dynamic_params": ["where", "geometry"],
+      "provider_field": "DW"       
     }
   }
 }
