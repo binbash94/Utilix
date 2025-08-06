@@ -250,7 +250,6 @@ async def get_utilities_for_parcel(
             well_available, water_connected, sewer_connected = _classify_water_sewer(
                 row.get("DW"), row.get("WW")
             )
-            well_use = row.get("DW_SRC_TYP") or row.get("DW_SRC_NAME")
             # septic_present duplicated for clarity
             septic_present = None
             if sewer_connected is not None:

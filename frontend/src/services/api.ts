@@ -18,7 +18,6 @@ export type LookupResponse = {
   sewer_available: boolean;
   sewer_provider: string | null;
   well_available?: boolean | null;
-  well_use?: string | null;
   septic_present?: boolean | null;
   sewer_connected?:boolean | null;
   water_connected?:boolean | null;

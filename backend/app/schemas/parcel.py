@@ -47,7 +47,6 @@ class ParcelUtilityInfo(BaseModel):
     sewer_available: bool
     sewer_provider: Optional[str]
     well_available: Optional[bool] = None
-    well_use: Optional[str] = None
     septic_present: Optional[bool] = None,
     water_connected: Optional[bool] = None,
     sewer_connected: Optional[bool] = None
