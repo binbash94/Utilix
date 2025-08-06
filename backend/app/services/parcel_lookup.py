@@ -265,8 +265,8 @@ async def get_utilities_for_parcel(
         water_provider=water,
         sewer_available=bool(sewer),
         sewer_provider=sewer,
-        well_available=well_available,
-        septic_present=septic_present,
-        water_connected=water_connected,
-        sewer_connected=sewer_connected
+        well_available=well_available if well_available else False,
+        septic_present=septic_present if septic_present else False,
+        water_connected=water_connected if water_connected else False,
+        sewer_connected=sewer_connected if sewer_connected else False
     )
