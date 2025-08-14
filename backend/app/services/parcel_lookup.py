@@ -59,7 +59,7 @@ def _parse_date(s: Any) -> datetime | None:
     except Exception:
         return None
 
-async def _wells_for_parcel(layer: LayerCfg, strap: str) -> list[dict]:
+async def _utilities_for_parcel(layer: LayerCfg, strap: str) -> list[dict]:
     """
     Query statewide FL DOH well/septic layer by parcel identifiers.
     Tries both PARCELNO and ALT_KEY; falls back to geometry (point-in-poly)
@@ -226,25 +226,26 @@ async def get_utilities_for_parcel(
 
     # 1) Fetch parcel geometry
     geom = await _parcel_geometry(cfg.parcel_layer, apn, address, cfg.id_field)
-    if not geom:
-        return None
 
-    lon, lat = geom["lon"], geom["lat"]
+    if geom:
+        lon, lat = geom["lon"], geom["lat"]
+        electric = await _point_in_layer(cfg.electric_territory_layer, lon, lat)
+        water = await _point_in_layer(cfg.water_layer, lon, lat) 
+        sewer = await _point_in_layer(cfg.sewer_layer, lon, lat)
+    else:
+        electric = None
+        water =  None
+        sewer = None
 
-    # 2) Hit each utility layer (use .getattr in case some counties lack water/sewer)
-    electric = await _point_in_layer(cfg.electric_territory_layer, lon, lat)
-    water = await _point_in_layer(cfg.water_layer, lon, lat) 
-    sewer = await _point_in_layer(cfg.sewer_layer, lon, lat)
 
     well_available: Optional[bool] = None
-    well_use: Optional[str] = None
     septic_present: Optional[bool] = None
     water_connected: Optional[bool] = None
     sewer_connected: Optional[bool] = None
 
     wells_layer = getattr(cfg, "wells_layer", None)
     if wells_layer:
-        rows = await _wells_for_parcel(wells_layer, apn)
+        rows = await _utilities_for_parcel(wells_layer, apn)
         if rows:
             row = rows[0]                      # FLWMI = one row per parcel
             well_available, water_connected, sewer_connected = _classify_water_sewer(
